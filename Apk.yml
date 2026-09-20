@@ -1,0 +1,37 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-size: 18
+
+      - name: Install Project Dependencies
+        run: |
+          npm install -g @ionic/cli
+          npm install
+
+      - name: Web Build Project
+        run: npm run build --if-present
+
+      - name: Build Android App with Capacitor
+        run: |
+          npx cap init "Drive Paradise" "com.skb.driveparadise" --web-dir=dist --create-android-project=false || true
+          npx cap add android || true
+          npx cap sync
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload Final APK File
+        uses: actions/upload-artifact@v4
+        with:
+          name: Drive-Paradise-APK
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
